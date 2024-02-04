@@ -45,15 +45,8 @@ public class ShopService {
 		responseShopServices.setEstat("OK");
 		responseShopServices.setResultat(resultat);
 		
-		// lanzamos la task para "caducar" el carret
-		Timer timer = new Timer();
-		timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-            	log.info("## Carret "+carret.getId()+" caducat!.");
-            	eliminarCarret(carret.getId());
-            }
-        }, 1 * 60 * 1000);
+		// Llancem la *task per a "caducar" el *carret
+		this.iniciarTasca(carret);
 
 		return responseShopServices;
 	}
@@ -79,10 +72,10 @@ public class ShopService {
 		} else {
 			Optional<Carret> carret = carrets.stream().filter(c -> c.id.equals(request.idCarret)).findFirst();
 			carret.get().productes = new ArrayList<Producte>(request.getProductes());
-			log.info("## Producte/s  afegit/s al carret "+request.idCarret+" amb èxit!");
+			log.info("## Producte/s  afegit/s al carret "+request.idCarret+" amb èxit!.");
 			
 			responseShopServices = obtindreCarret(request.idCarret);
-			responseShopServices.setDescripcio("Producte/s  afegit/s al carret "+request.idCarret+" amb èxit!");
+			responseShopServices.setDescripcio("Producte/s  afegit/s al carret "+request.idCarret+" amb èxit!.");
 		}
 		return responseShopServices;
 	}
@@ -111,6 +104,17 @@ public class ShopService {
 			}
 		}
 		return responseShopServices;
+	}
+	
+	private void iniciarTasca(Carret carret) {
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+            	log.info("## Carret "+carret.getId()+" caducat!.");
+            	eliminarCarret(carret.getId());
+            }
+        }, 10 * 60 * 1000);
 	}
 	
 //	@Scheduled(fixedDelay = 600000)

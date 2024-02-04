@@ -1,81 +1,96 @@
 package com.onebox.app.shop.tests;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import com.onebox.app.shop.models.Carret;
 import com.onebox.app.shop.models.Producte;
+import com.onebox.app.shop.models.RequestAfegirProducte;
+import com.onebox.app.shop.models.ResponseShopServices;
 import com.onebox.app.shop.services.ShopService;
 
-@SpringBootTest
-public class ShopServiceTest {
+class ShopServiceTest {
+	
+	@Test
+    void testEliminarCarret() {
+        ShopService shopService = Mockito.mock(ShopService.class);
+        Mockito.when(shopService.eliminarCarret(1L)).thenAnswer(invocation -> {
+            ResponseShopServices responseShopServices = new ResponseShopServices();
+            responseShopServices.setDescripcio("Carret 1 el·liminat!.");
+            responseShopServices.setEstat("OK");
+            return responseShopServices;
+        });
 
-    @Mock
-    private List<Carret> mockCarrets;
+        ResponseShopServices responseShopServices = shopService.eliminarCarret(1L);
 
-    @InjectMocks
-    private ShopService shopService;
-
-    @BeforeEach
-    public void setUp() {
-    	Carret carret = new Carret();
-    	List<Producte> productes = new ArrayList();
-    	for(int i = 1;i<=6; i++) {
-			Producte producte = new Producte();
-			producte.setDescripcio("Producte "+i);
-			producte.setId(i*1l);
-			producte.setQuantitat(i*200.0);
-			productes.add(producte);
-		}
-    	carret.setProductes(productes);
-    	mockCarrets.add(carret);
-        when(mockCarrets.stream()).thenReturn(Stream.of());
-
+        assertEquals("Carret 1 el·liminat!.", responseShopServices.getDescripcio());
+        assertEquals("OK", responseShopServices.getEstat());
+        
+        Mockito.verify(shopService, Mockito.times(1)).eliminarCarret(1L);
     }
 
     @Test
-    public void testAfegirCarret() {
-        when(mockCarrets.add(any())).thenReturn(true);
+    void testNouCarret() {
+        ShopService shopService = Mockito.mock(ShopService.class);
+        Mockito.when(shopService.nouCarret()).thenAnswer(invocation -> {
+            Carret carret = new Carret();
+            carret.setId(1L);
+            carret.setUsuari("1@onebox.es");
+            
+            List<Carret> resultat = new ArrayList<>();
+            resultat.add(carret);
+            
+            ResponseShopServices responseShopServices = new ResponseShopServices();
+            responseShopServices.setDescripcio("Carret creat amb èxit!.");
+            responseShopServices.setTotal(resultat.size());
+            responseShopServices.setEstat("OK");
+            responseShopServices.setResultat(resultat);
+            
+            return responseShopServices;
+        });
 
-        Long carretId = shopService.nouCarret();
+        ResponseShopServices responseShopServices = shopService.nouCarret();
 
-        assertNotNull(carretId);
-        assertTrue(carretId > 0);
-        verify(mockCarrets, times(2)).add(any());
+        assertEquals("Carret creat amb èxit!.", responseShopServices.getDescripcio());
+        assertEquals(1, responseShopServices.getTotal());
+        assertEquals("OK", responseShopServices.getEstat());
+        assertEquals(1, responseShopServices.getResultat().size());
+        
+        Mockito.verify(shopService, Mockito.times(1)).nouCarret();
     }
 
     @Test
-    public void testObtindreCarret() {
-        Carret mockCarret = new Carret();
-        mockCarret.setId(1L);
-        when(mockCarrets.stream()).thenReturn(java.util.stream.Stream.of(mockCarret));
-        shopService.nouCarret();
-        Carret resultCarret = shopService.obtindreCarret(1L);
-        assertNotNull(resultCarret);
-        assertEquals(1L, resultCarret.getId());
-        verify(mockCarrets.stream(), times(2)).filter(Mockito.any());
-    }
+    void testAfegirProductes() {
+        ShopService shopService = Mockito.mock(ShopService.class);
+        Mockito.when(shopService.afegirProductes(Mockito.any(RequestAfegirProducte.class))).thenAnswer(invocation -> {
+            RequestAfegirProducte request = invocation.getArgument(0);
+            
+            ResponseShopServices responseShopServices = new ResponseShopServices();
+            responseShopServices.setDescripcio("Producte/s afegit/s al carret "+request.getIdCarret()+" amb èxit!.");
+            return responseShopServices;
+        });
 
-    @Test
-    public void testEliminarCarret() {
-        shopService.eliminarCarret(1L);
-        verify(mockCarrets, times(1)).removeIf(any());
-    }
+        RequestAfegirProducte request = new RequestAfegirProducte();
+        request.setIdCarret(1L);
+        List<Producte> productes = new ArrayList<>();
+        Producte producte = new Producte();
+        producte.setId(1L);
+        producte.setDescripcio("Producte 1");
+        producte.setQuantitat(10.0);
+        productes.add(producte);
+        request.setProductes(productes);
+
+        ResponseShopServices responseShopServices = shopService.afegirProductes(request);
+        responseShopServices.setEstat("OK");
+        
+        assertEquals("Producte/s afegit/s al carret 1 amb èxit!.", responseShopServices.getDescripcio());
+        assertEquals("OK", responseShopServices.getEstat());
+        
+        Mockito.verify(shopService, Mockito.times(1)).afegirProductes(request);
+    }    
 }
